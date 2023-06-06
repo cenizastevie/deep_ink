@@ -46,5 +46,3 @@ To test the Django Rest Framework, follow these steps:
 3. To run the unit tests, use the following command: `python manage.py test`.
 
 Please make sure to set the environment variables and credentials correctly before running the server or the tests.
-
-Feel free to modify the instructions as needed for your specific environment or requirements.
