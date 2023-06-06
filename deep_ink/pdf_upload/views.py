@@ -7,6 +7,7 @@ import json
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .serializers import PDFSerializer
+from .ripple import mint_nft, get_owned_nfts
 
 class PDFUploadView(APIView):
     def post(self, request):
@@ -23,11 +24,20 @@ class PDFUploadView(APIView):
             # Upload the JSON object to the specified endpoint
             response = self.upload_pdf_json(sha256_checksum, metadata)
 
+            if not response.ok:
+                error_message = response.json().get('error', {}).get('message')
+                return {'error': error_message}
+                
+            cid = response['value']['cid']
+            ipfs_url = f"https://nftstorage.link/ipfs/{cid}"
+
+            # Mint the NFT using the generated IPFS URL
+            mint_result = mint_nft(ipfs_url)
+
             return Response({
                 'message': 'PDF uploaded successfully.',
                 'sha256_checksum': sha256_checksum,
                 'metadata': metadata,
-                'upload_response': response.text
             })
         else:
             return Response(serializer.errors, status=400)
@@ -60,4 +70,10 @@ class PDFUploadView(APIView):
             })
         }
         response = requests.post(url, headers=headers, json=payload)
-        return response
+        return response.json()
+
+class ListNFTsView(APIView):
+    def get(self, request):
+        marker = request.query_params.get('marker')
+        nfts = get_owned_nfts(marker)
+        return Response({'nfts': nfts})
